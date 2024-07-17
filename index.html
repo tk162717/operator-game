@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>999 Operator Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="password-container" id="passwordContainer">
+        <h1>Enter Password</h1>
+        <input type="password" id="password" placeholder="Password">
+        <button id="passwordBtn">Enter</button>
+        <p id="error" class="error"></p>
+    </div>
+    <div class="container" id="mainContent" style="display:none;">
+        <h1>999 Operator Game</h1>
+        <div class="map-section">
+            <input type="text" id="address" placeholder="Enter Address">
+            <button id="searchBtn">Search</button>
+            <div id="loadingBar"></div>
+            <iframe id="map" width="100%" height="300px" style="border:0" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps/embed/v1/view?key=YOUR_API_KEY&center=0,0&zoom=2"></iframe>
+        </div>
+        <div class="notes-section">
+            <h2>Notes</h2>
+            <textarea id="notes" placeholder="Enter notes here..."></textarea>
+        </div>
+        <div class="units-section">
+            <h2>Send Units</h2>
+            <label><input type="checkbox" id="fireUnit"> Fire</label>
+            <label><input type="checkbox" id="policeUnit"> Police</label>
+            <label><input type="checkbox" id="ambulanceUnit"> Ambulance</label>
+            <button id="sendUnitsBtn">Send Units</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
