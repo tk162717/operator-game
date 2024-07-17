@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Generate a random location
                 const randomLat = Math.random() * 180 - 90;
                 const randomLong = Math.random() * 360 - 180;
-                map.src = `https://www.google.com/maps/embed/v1/view?key=YOUR_API_KEY&center=${randomLat},${randomLong}&zoom=15`;
+                map.src = `https://www.google.com/maps/embed/v1/view?key=AIzaSyDot98cx3Hx197MvTvvBaShWMmza-d9A4k&center=${randomLat},${randomLong}&zoom=15`;
                 loadingBar.style.display = 'none';
             }
         }, 20000); // 20 seconds
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             loadingBar.style.display = 'none';
             if (addressInput.value) {
-                map.src = `https://www.google.com/maps/embed/v1/search?key=YOUR_API_KEY&q=${encodeURIComponent(addressInput.value)}`;
+                map.src = `https://www.google.com/maps/embed/v1/search?key=AIzaSyDot98cx3Hx197MvTvvBaShWMmza-d9A4k&q=${encodeURIComponent(addressInput.value)}`;
             }
         }, 3000); // Simulated search time
     });
