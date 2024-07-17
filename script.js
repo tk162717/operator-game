@@ -16,53 +16,51 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const addressInput = document.getElementById('address');
-    const searchBtn = document.getElementById('searchBtn');
-    const loadingBar = document.getElementById('loadingBar');
-    const map = document.getElementById('map');
-    const sendUnitsBtn = document.getElementById('sendUnitsBtn');
+    const locationInput = document.getElementById('location');
+    const callTypeSelect = document.getElementById('callType');
+    const submitCallBtn = document.getElementById('submitCallBtn');
+    const activeCallsTable = document.getElementById('activeCallsTable').querySelector('tbody');
 
-    let loadingTimeout;
+    let callIdCounter = 100;
 
-    const searchAddress = () => {
-        clearTimeout(loadingTimeout);
-        loadingBar.style.display = 'block';
-        map.src = "about:blank"; // Reset map src
+    submitCallBtn.addEventListener('click', () => {
+        const location = locationInput.value.trim();
+        const callType = callTypeSelect.value;
+        
+        if (location) {
+            const callId = callIdCounter++;
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>${callId}</td>
+                <td>${callType}</td>
+                <td>${callType}</td>
+                <td>${location}</td>
+            `;
 
-        loadingTimeout = setTimeout(() => {
-            if (!addressInput.value) {
-                // Generate a random location within Birmingham, UK
-                const birminghamLat = 52.4862;
-                const birminghamLong = -1.8904;
-                const randomLat = birminghamLat + (Math.random() - 0.5) * 0.1;
-                const randomLong = birminghamLong + (Math.random() - 0.5) * 0.1;
-                map.src = `https://www.google.com/maps/embed/v1/view?key=AIzaSyDot98cx3Hx197MvTvvBaShWMmza-d9A4k&center=${randomLat},${randomLong}&zoom=15`;
-                loadingBar.style.display = 'none';
-            }
-        }, 20000); // 20 seconds
+            newRow.addEventListener('click', () => {
+                displayCallDetails(callId, location, callType);
+            });
 
-        // Simulate loading bar
-        setTimeout(() => {
-            loadingBar.style.display = 'none';
-            if (addressInput.value) {
-                map.src = `https://www.google.com/maps/embed/v1/search?key=AIzaSyDot98cx3Hx197MvTvvBaShWMmza-d9A4k&q=${encodeURIComponent(addressInput.value)},Birmingham,UK`;
-            }
-        }, 3000); // Simulated search time
-    };
+            activeCallsTable.appendChild(newRow);
 
-    searchBtn.addEventListener('click', searchAddress);
-
-    addressInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            searchAddress();
+            locationInput.value = '';
+            callTypeSelect.value = 'Police';
         }
     });
 
-    sendUnitsBtn.addEventListener('click', () => {
-        const units = [];
-        if (document.getElementById('fireUnit').checked) units.push('Fire');
-        if (document.getElementById('policeUnit').checked) units.push('Police');
-        if (document.getElementById('ambulanceUnit').checked) units.push('Ambulance');
-        alert(`Units Sent: ${units.join(', ')}`);
-    });
+    const displayCallDetails = (callId, location, callType) => {
+        const callDetailsSection = document.querySelector('.call-details-section');
+        const callMap = document.getElementById('callMap');
+        const callNotes = document.getElementById('callNotes');
+        const saveNotesBtn = document.getElementById('saveNotesBtn');
+
+        callDetailsSection.style.display = 'block';
+        callMap.innerHTML = `<iframe width="100%" height="100%" frameborder="0" style="border:0"
+            src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDot98cx3Hx197MvTvvBaShWMmza-d9A4k
+            &q=${encodeURIComponent(location)}" allowfullscreen></iframe>`;
+
+        saveNotesBtn.onclick = () => {
+            alert(`Notes for call ID ${callId} saved: ${callNotes.value}`);
+        };
+    };
 });
