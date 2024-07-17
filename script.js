@@ -24,16 +24,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let loadingTimeout;
 
-    searchBtn.addEventListener('click', () => {
+    const searchAddress = () => {
         clearTimeout(loadingTimeout);
         loadingBar.style.display = 'block';
         map.src = "about:blank"; // Reset map src
 
         loadingTimeout = setTimeout(() => {
             if (!addressInput.value) {
-                // Generate a random location
-                const randomLat = Math.random() * 180 - 90;
-                const randomLong = Math.random() * 360 - 180;
+                // Generate a random location within Birmingham, UK
+                const birminghamLat = 52.4862;
+                const birminghamLong = -1.8904;
+                const randomLat = birminghamLat + (Math.random() - 0.5) * 0.1;
+                const randomLong = birminghamLong + (Math.random() - 0.5) * 0.1;
                 map.src = `https://www.google.com/maps/embed/v1/view?key=AIzaSyDot98cx3Hx197MvTvvBaShWMmza-d9A4k&center=${randomLat},${randomLong}&zoom=15`;
                 loadingBar.style.display = 'none';
             }
@@ -43,9 +45,17 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             loadingBar.style.display = 'none';
             if (addressInput.value) {
-                map.src = `https://www.google.com/maps/embed/v1/search?key=AIzaSyDot98cx3Hx197MvTvvBaShWMmza-d9A4k&q=${encodeURIComponent(addressInput.value)}`;
+                map.src = `https://www.google.com/maps/embed/v1/search?key=AIzaSyDot98cx3Hx197MvTvvBaShWMmza-d9A4k&q=${encodeURIComponent(addressInput.value)},Birmingham,UK`;
             }
         }, 3000); // Simulated search time
+    };
+
+    searchBtn.addEventListener('click', searchAddress);
+
+    addressInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            searchAddress();
+        }
     });
 
     sendUnitsBtn.addEventListener('click', () => {
