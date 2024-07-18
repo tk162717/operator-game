@@ -8,7 +8,7 @@ body {
     color: #ffffff;
 }
 
-.container, .password-container {
+.container, .password-container, .popup, .dispatch-content, .create-call-screen {
     max-width: 800px;
     margin: 0 auto;
     background: #1e1e1e;
@@ -23,7 +23,7 @@ body {
     margin-bottom: 20px;
 }
 
-.header button {
+.header button, .popup button {
     background: #00ccff;
     color: #000;
     border: none;
@@ -32,7 +32,7 @@ body {
     border-radius: 4px;
 }
 
-.header button:hover {
+.header button:hover, .popup button:hover {
     background: #0099cc;
 }
 
@@ -80,7 +80,7 @@ button:hover {
     background: #333;
 }
 
-#callMap {
+#callMap, #createCallMap {
     margin-top: 20px;
 }
 
@@ -91,4 +91,61 @@ textarea {
 #error {
     color: red;
     text-align: center;
+}
+
+.popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #333;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    display: none;
+}
+
+.popup button {
+    margin-top: 10px;
+}
+
+.dispatch-content {
+    margin-top: 20px;
+}
+
+#agentsList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.create-call-screen {
+    display: none;
+    margin-top: 20px;
+}
+
+.loading-bar {
+    width: 100%;
+    background: #333;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.loading-fill {
+    width: 0;
+    height: 10px;
+    background: #00ccff;
+    border-radius: 4px;
+    animation: loading 3s linear forwards;
+}
+
+@keyframes loading {
+    0% {
+        width: 0;
+    }
+    100% {
+        width: 100%;
+    }
 }
