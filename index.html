@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>999 Operator Game</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDot98cx3Hx197MvTvvBaShWMmza-d9A4k"></script>
 </head>
 <body>
     <div class="password-container" id="passwordContainer">
@@ -49,6 +50,12 @@
         <div class="call-details-section" style="display:none;">
             <h2>Call Details</h2>
             <div id="callMap" style="width:100%; height:300px;"></div>
+            <div id="locationTracing" style="display:none;">
+                <p>Tracing caller location...</p>
+                <div class="loading-bar">
+                    <div class="loading-fill"></div>
+                </div>
+            </div>
             <h3>Units</h3>
             <select id="editCallType">
                 <option value="Police">Police</option>
