@@ -11,9 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logoutBtn');
     const homeContent = document.getElementById('homeContent');
     const dispatchContent = document.getElementById('dispatchContent');
-    const locationInput = document.getElementById('location');
-    const callTypeSelect = document.getElementById('callType');
-    const submitCallBtn = document.getElementById('submitCallBtn');
     const activeCallsTable = document.getElementById('activeCallsTable').querySelector('tbody');
     const callDetailsSection = document.getElementById('callDetailsSection');
     const callMap = document.getElementById('callMap');
@@ -105,113 +102,87 @@ document.addEventListener('DOMContentLoaded', () => {
         createCallSection.style.display = 'none';
     });
 
-    submitCallBtn.addEventListener('click', () => {
-        const location = locationInput.value.trim();
-        const callType = callTypeSelect.value;
-        const callId = callIdCounter++;
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td>${callId}</td>
-            <td>${callType}</td>
-            <td>${location}</td>
-            <td>
-                <button class="view-details-btn" data-call-id="${callId}">View</button>
-                <button class="delete-call-btn" data-call-id="${callId}">Delete</button>
-                <button class="transfer-call-btn" data-call-id="${callId}">Transfer</button>
-            </td>
-        `;
-        activeCallsTable.appendChild(newRow);
-        activeCalls.push({ id: callId, type: callType, location, notes: '', operator: currentUser.name });
-    });
-
-    activeCallsTable.addEventListener('click', (event) => {
-        const target = event.target;
-        const callId = parseInt(target.getAttribute('data-call-id'));
-        if (target.classList.contains('view-details-btn')) {
-            showCallDetails(callId);
-        } else if (target.classList.contains('delete-call-btn')) {
-            deleteCall(callId);
-        } else if (target.classList.contains('transfer-call-btn')) {
-            transferCall(callId);
-        }
-    });
-
     function displayAgents() {
         agentsList.innerHTML = '';
-        operators.forEach(op => {
-            if (op.id !== currentUser.id) {
+        operators.forEach(operator => {
+            if (operator.id !== currentUser.id) {
                 const agentDiv = document.createElement('div');
-                agentDiv.innerHTML = `Agent: ${op.name} (ID: ${op.id})`;
+                agentDiv.textContent = `${operator.name} (${operator.id})`;
                 agentsList.appendChild(agentDiv);
             }
         });
     }
 
-    function generateRandomLocation() {
-        const locations = [
-            { lat: 52.4862, lng: -1.8904 },
-            { lat: 52.5096, lng: -1.8840 },
-            { lat: 52.4508, lng: -1.8737 }
-        ];
-        return locations[Math.floor(Math.random() * locations.length)];
-    }
-
-    function showCallDetails(callId) {
-        const call = activeCalls.find(c => c.id === callId);
-        if (call) {
-            locationTracing.style.display = 'block';
-            callDetailsSection.style.display = 'block';
-            setTimeout(() => {
-                locationTracing.style.display = 'none';
-                callMap.innerHTML = '';
-                const map = new google.maps.Map(callMap, {
-                    center: generateRandomLocation(),
-                    zoom: 14
-                });
-                new google.maps.Marker({
-                    position: generateRandomLocation(),
-                    map: map
-                });
-            }, 20000);
+    activeCallsTable.addEventListener('click', (event) => {
+        if (event.target.classList.contains('view-details-btn')) {
+            const callId = event.target.dataset.callId;
+            viewCallDetails(callId);
+        } else if (event.target.classList.contains('delete-call-btn')) {
+            const callId = event.target.dataset.callId;
+            deleteCall(callId);
+        } else if (event.target.classList.contains('transfer-call-btn')) {
+            const callId = event.target.dataset.callId;
+            transferCall(callId);
         }
-    }
+    });
 
-    function deleteCall(callId) {
-        activeCalls = activeCalls.filter(call => call.id !== callId);
-        const row = activeCallsTable.querySelector(`button[data-call-id="${callId}"]`).parentNode.parentNode;
-        row.parentNode.removeChild(row);
-    }
-
-    function transferCall(callId) {
-        const agents = operators.filter(op => op.id !== currentUser.id);
-        const agent = agents[Math.floor(Math.random() * agents.length)];
-        alert(`Call ${callId} transferred to Agent: ${agent.name}`);
-        activeCalls = activeCalls.filter(call => call.id !== callId);
-        const row = activeCallsTable.querySelector(`button[data-call-id="${callId}"]`).parentNode.parentNode;
-        row.parentNode.removeChild(row);
+    function viewCallDetails(callId) {
+        const call = activeCalls.find(c => c.id == callId);
+        if (call) {
+            callDetailsSection.style.display = 'block';
+            homeContent.style.display = 'none';
+            const callLatLng = call.location.split(', ').map(Number);
+            const callLocation = new google.maps.LatLng(callLatLng[0], callLatLng[1]);
+            const callMapInstance = new google.maps.Map(callMap, {
+                center: callLocation,
+                zoom: 14
+            });
+            new google.maps.Marker({
+                position: callLocation,
+                map: callMapInstance
+            });
+        }
     }
 
     closeCallDetailsBtn.addEventListener('click', () => {
         callDetailsSection.style.display = 'none';
+        homeContent.style.display = 'block';
     });
 
-    setInterval(() => {
-        if (activeCalls.length < 5) {
-            const callId = callIdCounter++;
-            const randomLocation = generateRandomLocation();
-            const callType = ['Police', 'Ambulance', 'Fire'][Math.floor(Math.random() * 3)];
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td>${callId}</td>
-                <td>${callType}</td>
-                <td>${randomLocation.lat}, ${randomLocation.lng}</td>
-                <td>
-                    <button class="view-details-btn" data-call-id="${callId}">View</button>
-                    <button class="delete-call-btn" data-call-id="${callId}">Delete</button>
-                    <button class="transfer-call-btn" data-call-id="${callId}">Transfer</button>
-                </td>
-            `;
-            activeCallsTable.appendChild(newRow);
-            activeCalls.push({ id: callId, type: callType, location: `${randomLocation.lat}, ${randomLocation.lng}`, notes: '', operator: 'Other Agent' });
-        }
-    },
+    function deleteCall(callId) {
+        activeCalls = activeCalls.filter(c => c.id != callId);
+        const row = document.querySelector(`.delete-call-btn[data-call-id="${callId}"]`).closest('tr');
+        row.remove();
+    }
+
+    function transferCall(callId) {
+        // Implement transfer call functionality here
+    }
+
+    setInterval(generateFakeCall, 30000);
+
+    function generateFakeCall() {
+        if (activeCalls.length >= 5) return;
+        const fakeCallId = callIdCounter++;
+        const fakeCall = {
+            id: fakeCallId,
+            type: ['Police', 'Ambulance', 'Fire'][Math.floor(Math.random() * 3)],
+            location: `${52.4862 + (Math.random() - 0.5) / 1000}, ${-1.8904 + (Math.random() - 0.5) / 1000}`,
+            notes: '',
+            operator: `Agent ${Math.floor(Math.random() * 100000)}`
+        };
+        activeCalls.push(fakeCall);
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td>${fakeCall.id}</td>
+            <td>${fakeCall.type}</td>
+            <td>${fakeCall.location}</td>
+            <td>
+                <button class="view-details-btn" data-call-id="${fakeCall.id}">View</button>
+                <button class="delete-call-btn" data-call-id="${fakeCall.id}">Delete</button>
+                <button class="transfer-call-btn" data-call-id="${fakeCall.id}">Transfer</button>
+            </td>
+        `;
+        activeCallsTable.appendChild(newRow);
+    }
+});
