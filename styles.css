@@ -1,26 +1,27 @@
+/* Basic styling */
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #000;
-    color: #fff;
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #ffffff;
 }
 
 header {
     display: flex;
     justify-content: space-between;
-    background-color: #333;
-    padding: 1rem;
+    padding: 10px;
+    background-color: #1c1c1c;
 }
 
-header button {
+button {
+    background-color: #333;
     color: #fff;
-    background-color: #000;
-    border: 1px solid #fff;
-    padding: 0.5rem;
+    border: none;
+    padding: 10px;
     cursor: pointer;
 }
 
-header button:hover {
-    background-color: #444;
+button:hover {
+    background-color: #555;
 }
 
 #loginContainer, #mainContainer {
@@ -32,7 +33,8 @@ header button:hover {
 }
 
 #loginContainer input, #loginContainer button {
-    margin: 0.5rem;
+    margin: 5px;
+    padding: 10px;
 }
 
 table {
@@ -40,33 +42,12 @@ table {
     border-collapse: collapse;
 }
 
-table, th, td {
-    border: 1px solid #fff;
-}
-
 th, td {
-    padding: 0.5rem;
+    border: 1px solid #333;
+    padding: 10px;
     text-align: left;
 }
 
-#createCallSection, #callDetailsSection {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-#createCallSection div, #callDetailsSection div {
-    margin: 0.5rem;
-}
-
-#locationTracing {
-    font-size: 1.5rem;
-    color: #fff;
+thead {
+    background-color: #444;
 }
