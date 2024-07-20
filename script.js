@@ -14,19 +14,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeCallsTable = document.getElementById('activeCallsTable').querySelector('tbody');
     const callDetailsSection = document.getElementById('callDetailsSection');
     const callMap = document.getElementById('callMap');
-    const locationTracing = document.getElementById('locationTracing');
     const closeCallDetailsBtn = document.getElementById('closeCallDetailsBtn');
     const createCallSection = document.getElementById('createCallSection');
     const createCallMapElement = document.getElementById('createCallMap');
     const newCallLocation = document.getElementById('newCallLocation');
     const newCallType = document.getElementById('newCallType');
+    const newCallNotes = document.getElementById('newCallNotes');
     const submitNewCallBtn = document.getElementById('submitNewCallBtn');
+    const quickCallLocation = document.getElementById('quickCallLocation');
+    const quickCallSubmit = document.getElementById('quickCallSubmit');
+    const findLocationBtn = document.getElementById('findLocationBtn');
     const agentsList = document.getElementById('agentsList');
+    const addNotesBtn = document.getElementById('addNotesBtn');
+    const callNotes = document.getElementById('callNotes');
 
     let callIdCounter = 100;
     let activeCalls = [];
     let operators = [];
     let currentUser = null;
+    let callMapInstance, createCallMapInstance;
 
     async function loadOperators() {
         const response = await fetch('operators.json');
@@ -35,7 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadOperators();
 
-    loginBtn.addEventListener('click', () => {
+    loginBtn.addEventListener('click', login);
+    document.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            if (loginContainer.style.display !== 'none') login();
+            else if (document.activeElement === quickCallLocation) quickCallSubmit.click();
+            else if (document.activeElement === newCallLocation || document.activeElement === newCallType || document.activeElement === newCallNotes) submitNewCallBtn.click();
+        }
+    });
+
+    function login() {
         const userId = userIdInput.value.trim();
         const password = passwordInput.value.trim();
         const user = operators.find(op => op.id === userId && op.password === password);
@@ -46,63 +61,190 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             loginError.textContent = 'Invalid User ID or Password';
         }
-    });
+    }
 
     homeBtn.addEventListener('click', () => {
         homeContent.style.display = 'block';
         dispatchContent.style.display = 'none';
+        createCallSection.style.display = 'none';
+        callDetailsSection.style.display = 'none';
     });
 
     dispatchBtn.addEventListener('click', () => {
         homeContent.style.display = 'none';
         dispatchContent.style.display = 'block';
+        createCallSection.style.display = 'none';
+        callDetailsSection.style.display = 'none';
         displayAgents();
+    });
+
+    createCallBtn.addEventListener('click', () => {
+        homeContent.style.display = 'none';
+        dispatchContent.style.display = 'none';
+        createCallSection.style.display = 'block';
+        callDetailsSection.style.display = 'none';
+        initCreateCallMap();
     });
 
     logoutBtn.addEventListener('click', () => {
         currentUser = null;
-        loginContainer.style.display = 'flex';
+        loginContainer.style.display = 'block';
         mainContainer.style.display = 'none';
+        userIdInput.value = '';
+        passwordInput.value = '';
     });
 
-    createCallBtn.addEventListener('click', () => {
-        createCallSection.style.display = 'block';
-        const createCallMap = new google.maps.Map(createCallMapElement, {
-            center: { lat: 52.4862, lng: -1.8904 },
-            zoom: 14
-        });
+    quickCallSubmit.addEventListener('click', () => {
+        handleQuickCall();
+    });
 
-        createCallMap.addListener('click', (event) => {
-            new google.maps.Marker({
-                position: event.latLng,
-                map: createCallMap
-            });
-            const latLng = event.latLng;
-            newCallLocation.value = `${latLng.lat()}, ${latLng.lng()}`;
-        });
+    findLocationBtn.addEventListener('click', () => {
+        findLocation(newCallLocation.value, createCallMapInstance);
     });
 
     submitNewCallBtn.addEventListener('click', () => {
-        const location = newCallLocation.value.trim();
-        const callType = newCallType.value;
-        const callId = callIdCounter++;
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td>${callId}</td>
-            <td>${callType}</td>
-            <td>${location}</td>
-            <td>
-                <button class="view-details-btn" data-call-id="${callId}">View</button>
-                <button class="delete-call-btn" data-call-id="${callId}">Delete</button>
-                <button class="transfer-call-btn" data-call-id="${callId}">Transfer</button>
-            </td>
-        `;
-        activeCallsTable.appendChild(newRow);
-        activeCalls.push({ id: callId, type: callType, location, notes: '', operator: currentUser.name });
-        createCallSection.style.display = 'none';
+        handleCreateCall();
     });
 
+    function handleQuickCall() {
+        const location = quickCallLocation.value.trim();
+        const callId = callIdCounter++;
+        if (!location) {
+            showLoadingBar(() => {
+                const randomLocation = getRandomLocation();
+                addCallToTable(callId, 'Quick Call', randomLocation);
+            });
+        } else {
+            addCallToTable(callId, 'Quick Call', location);
+        }
+        quickCallLocation.value = '';
+    }
+
+    function handleCreateCall() {
+        const location = newCallLocation.value.trim();
+        const type = newCallType.value;
+        const notes = newCallNotes.value.trim();
+        const callId = callIdCounter++;
+        if (!location) {
+            showLoadingBar(() => {
+                const randomLocation = getRandomLocation();
+                addCallToTable(callId, type, randomLocation, notes);
+            });
+        } else {
+            findLocation(location, createCallMapInstance, () => {
+                addCallToTable(callId, type, location, notes);
+            });
+        }
+        newCallLocation.value = '';
+        newCallNotes.value = '';
+        createCallSection.style.display = 'none';
+        homeContent.style.display = 'block';
+    }
+
+    function addCallToTable(id, type, location, notes = '') {
+        if (activeCalls.length >= 5) return;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${id}</td>
+            <td>${type}</td>
+            <td>${location}</td>
+            <td>
+                <button onclick="viewCallDetails(${id})">View</button>
+                <button onclick="transferCall(${id})">Transfer</button>
+                <button onclick="deleteCall(${id})">Delete</button>
+            </td>
+        `;
+        activeCalls.push({ id, type, location, notes });
+        activeCallsTable.appendChild(row);
+    }
+
+    function viewCallDetails(id) {
+        const call = activeCalls.find(c => c.id === id);
+        if (!call) return;
+        homeContent.style.display = 'none';
+        dispatchContent.style.display = 'none';
+        createCallSection.style.display = 'none';
+        callDetailsSection.style.display = 'block';
+        callNotes.value = call.notes;
+        callDetailsSection.dataset.callId = id;
+        initCallMap(call.location);
+    }
+
+    function transferCall(id) {
+        const call = activeCalls.find(c => c.id === id);
+        if (!call) return;
+
+        const agentId = prompt('Enter the Agent ID to transfer the call to:');
+        if (agentId && operators.find(op => op.id === agentId)) {
+            alert(`Call ${id} transferred to Agent ${agentId}`);
+        } else {
+            alert('Invalid Agent ID');
+        }
+    }
+
+    function deleteCall(id) {
+        const index = activeCalls.findIndex(c => c.id === id);
+        if (index === -1) return;
+        activeCalls.splice(index, 1);
+        activeCallsTable.deleteRow(index);
+    }
+
+    function showLoadingBar(callback) {
+        const loadingBar = document.createElement('div');
+        loadingBar.textContent = 'Localizing caller location...';
+        loadingBar.style.backgroundColor = '#555';
+        loadingBar.style.padding = '10px';
+        loadingBar.style.margin = '10px';
+        loadingBar.style.color = '#fff';
+        mainContainer.appendChild(loadingBar);
+        setTimeout(() => {
+            mainContainer.removeChild(loadingBar);
+            callback();
+        }, 2000);
+    }
+
+    function getRandomLocation() {
+        const locations = [
+            'Birmingham, UK',
+            'Sutton Coldfield, UK',
+            // Add more locations here
+        ];
+        return locations[Math.floor(Math.random() * locations.length)];
+    }
+
+    function findLocation(address, mapInstance, callback) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ 'address': address }, (results, status) => {
+            if (status === 'OK') {
+                const location = results[0].geometry.location;
+                mapInstance.setCenter(location);
+                new google.maps.Marker({
+                    map: mapInstance,
+                    position: location
+                });
+                if (callback) callback();
+            }
+        });
+    }
+
+    function initCallMap(location) {
+        callMapInstance = new google.maps.Map(callMap, {
+            zoom: 12,
+            center: { lat: 52.4862, lng: -1.8904 } // Birmingham, UK
+        });
+        findLocation(location, callMapInstance);
+    }
+
+    function initCreateCallMap() {
+        createCallMapInstance = new google.maps.Map(createCallMapElement, {
+            zoom: 12,
+            center: { lat: 52.4862, lng: -1.8904 } // Birmingham, UK
+        });
+    }
+
     function displayAgents() {
+        agentsList.innerHTML = '';
+        operators.forEach    function displayAgents() {
         agentsList.innerHTML = '';
         operators.forEach(operator => {
             if (operator.id !== currentUser.id) {
@@ -113,76 +255,72 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    activeCallsTable.addEventListener('click', (event) => {
-        if (event.target.classList.contains('view-details-btn')) {
-            const callId = event.target.dataset.callId;
-            viewCallDetails(callId);
-        } else if (event.target.classList.contains('delete-call-btn')) {
-            const callId = event.target.dataset.callId;
-            deleteCall(callId);
-        } else if (event.target.classList.contains('transfer-call-btn')) {
-            const callId = event.target.dataset.callId;
-            transferCall(callId);
+    addNotesBtn.addEventListener('click', () => {
+        const callId = callDetailsSection.dataset.callId;
+        const call = activeCalls.find(c => c.id === callId);
+        if (call) {
+            call.notes = callNotes.value;
+            alert('Notes updated successfully.');
         }
     });
-
-    function viewCallDetails(callId) {
-        const call = activeCalls.find(c => c.id == callId);
-        if (call) {
-            callDetailsSection.style.display = 'block';
-            homeContent.style.display = 'none';
-            const callLatLng = call.location.split(', ').map(Number);
-            const callLocation = new google.maps.LatLng(callLatLng[0], callLatLng[1]);
-            const callMapInstance = new google.maps.Map(callMap, {
-                center: callLocation,
-                zoom: 14
-            });
-            new google.maps.Marker({
-                position: callLocation,
-                map: callMapInstance
-            });
-        }
-    }
 
     closeCallDetailsBtn.addEventListener('click', () => {
         callDetailsSection.style.display = 'none';
         homeContent.style.display = 'block';
     });
 
-    function deleteCall(callId) {
-        activeCalls = activeCalls.filter(c => c.id != callId);
-        const row = document.querySelector(`.delete-call-btn[data-call-id="${callId}"]`).closest('tr');
-        row.remove();
+    function showLoadingBar(callback) {
+        const loadingBar = document.createElement('div');
+        loadingBar.textContent = 'Localizing caller location...';
+        loadingBar.style.backgroundColor = '#555';
+        loadingBar.style.padding = '10px';
+        loadingBar.style.margin = '10px';
+        loadingBar.style.color = '#fff';
+        mainContainer.appendChild(loadingBar);
+        setTimeout(() => {
+            mainContainer.removeChild(loadingBar);
+            callback();
+        }, 2000);
     }
 
-    function transferCall(callId) {
-        // Implement transfer call functionality here
+    function getRandomLocation() {
+        const locations = [
+            'Birmingham, UK',
+            'Sutton Coldfield, UK',
+            'Coventry, UK',
+            'Wolverhampton, UK',
+            'Leicester, UK'
+        ];
+        return locations[Math.floor(Math.random() * locations.length)];
     }
 
-    setInterval(generateFakeCall, 30000);
+    function findLocation(address, mapInstance, callback) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ 'address': address }, (results, status) => {
+            if (status === 'OK') {
+                const location = results[0].geometry.location;
+                mapInstance.setCenter(location);
+                new google.maps.Marker({
+                    map: mapInstance,
+                    position: location
+                });
+                if (callback) callback();
+            }
+        });
+    }
 
-    function generateFakeCall() {
-        if (activeCalls.length >= 5) return;
-        const fakeCallId = callIdCounter++;
-        const fakeCall = {
-            id: fakeCallId,
-            type: ['Police', 'Ambulance', 'Fire'][Math.floor(Math.random() * 3)],
-            location: `${52.4862 + (Math.random() - 0.5) / 1000}, ${-1.8904 + (Math.random() - 0.5) / 1000}`,
-            notes: '',
-            operator: `Agent ${Math.floor(Math.random() * 100000)}`
-        };
-        activeCalls.push(fakeCall);
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td>${fakeCall.id}</td>
-            <td>${fakeCall.type}</td>
-            <td>${fakeCall.location}</td>
-            <td>
-                <button class="view-details-btn" data-call-id="${fakeCall.id}">View</button>
-                <button class="delete-call-btn" data-call-id="${fakeCall.id}">Delete</button>
-                <button class="transfer-call-btn" data-call-id="${fakeCall.id}">Transfer</button>
-            </td>
-        `;
-        activeCallsTable.appendChild(newRow);
+    function initCallMap(location) {
+        callMapInstance = new google.maps.Map(callMap, {
+            zoom: 12,
+            center: { lat: 52.4862, lng: -1.8904 } // Birmingham, UK
+        });
+        findLocation(location, callMapInstance);
+    }
+
+    function initCreateCallMap() {
+        createCallMapInstance = new google.maps.Map(createCallMapElement, {
+            zoom: 12,
+            center: { lat: 52.4862, lng: -1.8904 } // Birmingham, UK
+        });
     }
 });
