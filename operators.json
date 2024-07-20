@@ -1,7 +1,6 @@
 [
-    {
-        "id": "78789",
-        "password": "admin78789",
-        "name": "Admin"
-    }
+    { "id": "78789", "password": "admin78789", "name": "Admin" },
+    { "id": "12345", "password": "password123", "name": "Operator A" },
+    { "id": "67890", "password": "password456", "name": "Operator B" },
+    { "id": "11223", "password": "password789", "name": "Operator C" }
 ]
