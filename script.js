@@ -30,16 +30,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let callIdCounter = 100;
     let activeCalls = [];
-    let operators = [];
+    let operators = [
+        { id: '78789', password: 'admin78789', name: 'Admin' },
+        { id: '12345', password: 'password123', name: 'Operator 1' },
+        { id: '67890', password: 'password456', name: 'Operator 2' }
+    ];
     let currentUser = null;
     let callMapInstance, createCallMapInstance;
-
-    async function loadOperators() {
-        const response = await fetch('operators.json');
-        operators = await response.json();
-    }
-
-    loadOperators();
 
     loginBtn.addEventListener('click', login);
     document.addEventListener('keypress', (e) => {
@@ -200,14 +197,16 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             mainContainer.removeChild(loadingBar);
             callback();
-        }, 2000);
+        }, 20000);
     }
 
     function getRandomLocation() {
         const locations = [
             'Birmingham, UK',
             'Sutton Coldfield, UK',
-            // Add more locations here
+            'Coventry, UK',
+            'Wolverhampton, UK',
+            'Leicester, UK'
         ];
         return locations[Math.floor(Math.random() * locations.length)];
     }
@@ -235,6 +234,14 @@ document.addEventListener('DOMContentLoaded', () => {
         findLocation(location, callMapInstance);
     }
 
+       function initCallMap(location) {
+        callMapInstance = new google.maps.Map(callMap, {
+            zoom: 12,
+            center: { lat: 52.4862, lng: -1.8904 } // Birmingham, UK
+        });
+        findLocation(location, callMapInstance);
+    }
+
     function initCreateCallMap() {
         createCallMapInstance = new google.maps.Map(createCallMapElement, {
             zoom: 12,
@@ -243,8 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function displayAgents() {
-        agentsList.innerHTML = '';
-        operators.forEach    function displayAgents() {
         agentsList.innerHTML = '';
         operators.forEach(operator => {
             if (operator.id !== currentUser.id) {
@@ -260,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const call = activeCalls.find(c => c.id === callId);
         if (call) {
             call.notes = callNotes.value;
-            alert('Notes updated successfully.');
+            alert('Notes updated successfully. Shared with units.');
         }
     });
 
@@ -280,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             mainContainer.removeChild(loadingBar);
             callback();
-        }, 2000);
+        }, 20000);
     }
 
     function getRandomLocation() {
@@ -323,4 +328,35 @@ document.addEventListener('DOMContentLoaded', () => {
             center: { lat: 52.4862, lng: -1.8904 } // Birmingham, UK
         });
     }
+
+    function displayAgents() {
+        agentsList.innerHTML = '';
+        operators.forEach(operator => {
+            if (operator.id !== currentUser.id) {
+                const agentDiv = document.createElement('div');
+                agentDiv.textContent = `${operator.name} (${operator.id})`;
+                agentsList.appendChild(agentDiv);
+            }
+        });
+    }
+
+    function handleLoginEnterKey(e) {
+        if (e.key === 'Enter') login();
+    }
+
+    function handleQuickCallEnterKey(e) {
+        if (e.key === 'Enter' && document.activeElement === quickCallLocation) {
+            quickCallSubmit.click();
+        }
+    }
+
+    function handleCreateCallEnterKey(e) {
+        if (e.key === 'Enter' && (document.activeElement === newCallLocation || document.activeElement === newCallType || document.activeElement === newCallNotes)) {
+            submitNewCallBtn.click();
+        }
+    }
+
+    document.addEventListener('keypress', handleLoginEnterKey);
+    document.addEventListener('keypress', handleQuickCallEnterKey);
+    document.addEventListener('keypress', handleCreateCallEnterKey);
 });
